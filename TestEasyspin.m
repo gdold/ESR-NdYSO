@@ -10,7 +10,7 @@ Sys.S = 0.5;
 %% g and A tensors from source %%
 % Allowed sources:
 % 'Maier-FlaigTensor'
-% 'Maier-FlaigPrincipal'
+% 'Maier-FlaigPrincipal' % gives vastly different results to other two
 % 'Wolfowicz' - corrected Euler convention
 parameter_source = 'Wolfowicz';
 Sys = NdYSOparams(Sys,parameter_source); % Appends chosen parameters to Sys
@@ -22,17 +22,19 @@ Sys = NdYSOparams(Sys,parameter_source); % Appends chosen parameters to Sys
 
 % Mag field close to D1 axis
 Exp = struct();
-Exp.mwFreq = 9.385; %GHz
+Exp.mwFreq = 9.7; %GHz
 Exp.Range = [0 600]; %mT % [350 600]
 Exp.CrystalSymmetry = 'C2h'; %monoclinic C^6_2h spacegroup 
 
 
 %% Crystal rotation %%
 % Calculate euler angles given xyz rotations
-phi = 45*(pi/180);
-theta = 45*(pi/180);
-rho = 90*(pi/180);
-cryst_rot = eulang(rotaxi2mat(ang2vec(phi,theta),rho));
+phi = 69.83;
+theta = 3.75;
+rho = 80;
+cryst_rot = eulang( rotz(phi) * roty(theta) * rotx(rho) );
+
+
 
 Exp.CrystalOrientation = cryst_rot; %Euler angles
 Exp.Temperature = 20; %Kelvin
