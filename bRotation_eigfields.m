@@ -45,7 +45,7 @@ Opt = struct();
 % --- Eigenfields ---
 %out = eigfields(Sys,Exp,Opt);
 
-num_of_points = 37;
+num_of_points = 361;
 angles = linspace(0,360,num_of_points)';
 x = [];
 y = [];

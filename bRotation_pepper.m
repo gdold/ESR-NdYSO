@@ -51,6 +51,7 @@ for n = 1:length(angles)
     rho = angles(n);
     Exp.CrystalOrientation = eulang( rotz(phi) * roty(theta) * rotx(rho) );
     pepper(Sys,Exp)
+    ylim([0,4]) % optional
     M(n) = getframe(gcf);
 end
 
