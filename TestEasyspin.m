@@ -12,8 +12,8 @@ Sys.S = 0.5;
 % 'Maier-FlaigTensor'
 % 'Maier-FlaigPrincipal'
 % 'Wolfowicz' - corrected Euler convention
-source = 'Wolfowicz';
-Sys = NdYSOparams(Sys,source); % Appends chosen parameters to Sys
+parameter_source = 'Wolfowicz';
+Sys = NdYSOparams(Sys,parameter_source); % Appends chosen parameters to Sys
 
 % The eigenvaues M-F Tensor do not match up with
 % M-F Principal - is this right?!
@@ -24,7 +24,7 @@ Sys = NdYSOparams(Sys,source); % Appends chosen parameters to Sys
 Exp = struct();
 Exp.mwFreq = 9.385; %GHz
 Exp.Range = [0 600]; %mT % [350 600]
-%Exp.CrystalSymmetry = 'C2h'; %monoclinic C^6_2h spacegroup 
+Exp.CrystalSymmetry = 'C2h'; %monoclinic C^6_2h spacegroup 
 
 
 %% Crystal rotation %%
