@@ -10,6 +10,7 @@ switch param
     case 'Maier-FlaigTensor'
         % Site 1 is occupied to a much higher degree
         % than site 2 for Nd:YSO
+        % Basis [D1 D2 b]
         Sys.g = [1.30 0.62 0.22;
                  0.62 -2.07 1.62;
                  0.22 1.62 -2.86];

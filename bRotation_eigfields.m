@@ -13,7 +13,7 @@ Sys.S = 0.5;
 % 'Maier-FlaigPrincipal' % gives vastly different results to other two
 % 'Wolfowicz' - corrected Euler convention
 %parameter_source = 'Maier-FlaigPrincipal';
-parameter_source = 'Wolfowicz';
+parameter_source = 'Maier-FlaigTensor';
 Sys = NdYSOparams(Sys,parameter_source); % Appends chosen parameters to Sys
 
 % The eigenvaues M-F Tensor do not match up with
@@ -21,7 +21,6 @@ Sys = NdYSOparams(Sys,parameter_source); % Appends chosen parameters to Sys
 
 %% Experiment properties %%
 
-% Mag field close to D1 axis
 Exp = struct();
 Exp.mwFreq = 9.7; %GHz
 Exp.Range = [0 1000]; %mT % [350 600]
@@ -29,6 +28,7 @@ Exp.CrystalSymmetry = 'C2h'; %monoclinic C^6_2h spacegroup
 Exp.Temperature = 20; %Kelvin
 
 %% Crystal rotation %%
+% [D1 D2 b]
 init_mag_vect = [1,0,0]; % a,c: [1,0,0], b:[0,1,0]
 init_mag_rot = rotMatBetweenVect([0,0,1],init_mag_vect);
 
@@ -45,7 +45,7 @@ Opt = struct();
 % total angle, steps
 rot_steps = 72;
 %rot_axis = [0 0 1]; % x y z
-rot_axis = ang2vec(69.83*deg,3.75*deg)'; % Fig 4.4a
+rot_axis = ang2vec(69.83*deg,3.75*deg)'; % Fig 4.4a % currently doesn't work
 %rot_axis = ang2vec(189.13*deg,96.21*deg)'; % Fig 4.4b
 %rot_axis = ang2vec(89.72*deg,-92.77*deg)';% Fig 4.4c
 
@@ -77,5 +77,5 @@ hold on
 scatter(x,y2,'.')
 xlabel('Angle (radians)')
 ylabel('B (mT)')
-text_label = {['Source: ',parameter_source],['Rotation axis: ',num2str(axis)]};
+text_label = {['Source: ',parameter_source],['Rotation axis: ',num2str(rot_axis)]};
 annotation('textbox',[.2 .5 .3 .3],'string',text_label,'FitBoxToText','on');
