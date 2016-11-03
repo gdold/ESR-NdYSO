@@ -13,7 +13,7 @@ Sys.S = 0.5;
 % 'Maier-FlaigPrincipal' % gives vastly different results to other two
 % 'Wolfowicz' - corrected Euler convention
 %parameter_source = 'Maier-FlaigPrincipal';
-parameter_source = 'Maier-FlaigTensor';
+parameter_source = 'Wolfowicz';
 Sys = NdYSOparams(Sys,parameter_source); % Appends chosen parameters to Sys
 
 % The eigenvaues M-F Tensor do not match up with
@@ -29,14 +29,10 @@ Exp.CrystalSymmetry = 'C2h'; %monoclinic C^6_2h spacegroup
 Exp.Temperature = 20; %Kelvin
 
 %% Crystal rotation %%
-%cryst_to_lab = rotz(135*deg)*roty(-90*deg)*rotz(180*deg);
-%cryst_to_lab = eye(3); %B along b
-cryst_to_lab = roty(pi/2); %B along D1
-%cryst_to_lab = rotx(-pi/2); % B along D2
-% Could issues be coming from imperfect B-field direction?
+init_mag_vect = [1,0,0]; % a,c: [1,0,0], b:[0,1,0]
+init_mag_rot = rotMatBetweenVect([0,0,1],init_mag_vect);
 
-cryst_rot_mat = cryst_to_lab;
-Exp.CrystalOrientation = eulang(cryst_rot_mat); %Euler angles
+Exp.CrystalOrientation = eulang(init_mag_rot); %Euler angles
 
 
 Opt = struct();
@@ -47,32 +43,38 @@ Opt = struct();
 % Calculate rotation increment for each step
 % given rotation axis in crystal frame,
 % total angle, steps
-steps = 12;
-%axis = [0 0 1]; % x y z
-axis = ang2vec(69.83*deg,3.75*deg)'; % Fig 4.4a
-%axis = ang2vec(189.13*deg,96.21*deg)'; % Fig 4.4b
-%axis = ang2vec(89.72*deg,-92.77*deg)';% Fig 4.4c
+rot_steps = 72;
+%rot_axis = [0 0 1]; % x y z
+rot_axis = ang2vec(69.83*deg,3.75*deg)'; % Fig 4.4a
+%rot_axis = ang2vec(189.13*deg,96.21*deg)'; % Fig 4.4b
+%rot_axis = ang2vec(89.72*deg,-92.77*deg)';% Fig 4.4c
 
 total_angle = 360*deg;
-Rot_inc = rotaxi2mat(axis,total_angle/steps);
+Rot_inc = rotaxi2mat(rot_axis,total_angle/rot_steps);
 
+cryst_mag_rot = init_mag_rot;
 x = [];
-y = [];
-for n = 0:steps
+y1 = [];
+y2 = [];
+for n = 0:rot_steps
     disp(n);
-    angle = n*total_angle/steps;
-    Exp.CrystalOrientation = eulang(cryst_rot_mat);
+    angle = n*total_angle/rot_steps;
+    Exp.CrystalOrientation = eulang(cryst_mag_rot);
     out = eigfields(Sys,Exp,Opt);
-    fields = out{1}';
-    x_temp = linspace(angle,angle,length(fields));
+    fields1 = out{1}';
+    fields2 = out{2}';
+    x_temp = linspace(angle,angle,length(fields1));
     
     x = [x x_temp];
-    y = [y fields];
+    y1 = [y1 fields1];
+    y2 = [y2 fields2];
     
-    cryst_rot_mat = cryst_rot_mat*Rot_inc; % perform rotation in crystal frame before converting to lab frame
+    cryst_mag_rot = Rot_inc*cryst_mag_rot; % perform rotation in crystal frame before converting to lab frame
 end
 
-scatter(x,y,'.')
+scatter(x,y1,'.')
+hold on
+scatter(x,y2,'.')
 xlabel('Angle (radians)')
 ylabel('B (mT)')
 text_label = {['Source: ',parameter_source],['Rotation axis: ',num2str(axis)]};
