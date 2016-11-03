@@ -1,3 +1,5 @@
+deg = pi/180;
+
 %% Spin system %%
 Sys = struct();
 Sys.Nucs = '145Nd';
@@ -11,7 +13,7 @@ Sys.S = 0.5;
 % 'Maier-FlaigPrincipal' % gives vastly different results to other two
 % 'Wolfowicz' - corrected Euler convention
 %parameter_source = 'Maier-FlaigPrincipal';
-parameter_source = 'Wolfowicz';
+parameter_source = 'Maier-FlaigTensor';
 Sys = NdYSOparams(Sys,parameter_source); % Appends chosen parameters to Sys
 
 % The eigenvaues M-F Tensor do not match up with
@@ -24,54 +26,54 @@ Exp = struct();
 Exp.mwFreq = 9.7; %GHz
 Exp.Range = [0 1000]; %mT % [350 600]
 Exp.CrystalSymmetry = 'C2h'; %monoclinic C^6_2h spacegroup 
-
+Exp.Temperature = 20; %Kelvin
 
 %% Crystal rotation %%
-% Calculate euler angles given xyz rotations
-%phi = 69.83;
-%theta = 3.75;
-%rho = 0;
-phi = 69.83;
-theta = 86;
-rho = 86;
-cryst_ang = [phi, theta, rho];
-cryst_rot = eulang( rotz(cryst_ang(1)) * roty(cryst_ang(2)) * rotx(cryst_ang(3)) );
+%cryst_to_lab = rotz(135*deg)*roty(-90*deg)*rotz(180*deg);
+%cryst_to_lab = eye(3); %B along b
+cryst_to_lab = roty(pi/2); %B along D1
+%cryst_to_lab = rotx(-pi/2); % B along D2
+% Could issues be coming from imperfect B-field direction?
 
+cryst_rot_mat = cryst_to_lab;
+Exp.CrystalOrientation = eulang(cryst_rot_mat); %Euler angles
 
-
-Exp.CrystalOrientation = cryst_rot; %Euler angles
-Exp.Temperature = 20; %Kelvin
 
 Opt = struct();
 %Opt.Threshold = 100;
 
-% --- Eigenfields ---
-%out = eigfields(Sys,Exp,Opt);
 
-num_of_points = 3;
-angles = linspace(0,360,num_of_points)';
+
+% Calculate rotation increment for each step
+% given rotation axis in crystal frame,
+% total angle, steps
+steps = 12;
+%axis = [0 0 1]; % x y z
+axis = ang2vec(69.83*deg,3.75*deg)'; % Fig 4.4a
+%axis = ang2vec(189.13*deg,96.21*deg)'; % Fig 4.4b
+%axis = ang2vec(89.72*deg,-92.77*deg)';% Fig 4.4c
+
+total_angle = 360*deg;
+Rot_inc = rotaxi2mat(axis,total_angle/steps);
+
 x = [];
 y = [];
-angle_choice = 1; % phi, theta, rho
-
-for n = 1:length(angles)
+for n = 0:steps
     disp(n);
-    cryst_ang(angle_choice) = angles(n);
-    Exp.CrystalOrientation = eulang( rotz(cryst_ang(1)) * roty(cryst_ang(2)) * rotx(cryst_ang(3)) );
+    angle = n*total_angle/steps;
+    Exp.CrystalOrientation = eulang(cryst_rot_mat);
     out = eigfields(Sys,Exp,Opt);
     fields = out{1}';
-    %fields = fields((length(fields)-16):length(fields)); % exclude all but 16 strongest transitions
-    %x_temp = linspace(rho,rho,length(fields));
-    x_temp = linspace(cryst_ang(angle_choice),cryst_ang(angle_choice),length(fields));
+    x_temp = linspace(angle,angle,length(fields));
     
     x = [x x_temp];
     y = [y fields];
+    
+    cryst_rot_mat = cryst_rot_mat*Rot_inc; % perform rotation in crystal frame before converting to lab frame
 end
 
 scatter(x,y,'.')
-xaxis_texts = {'Phi','Theta','Rho'};
-xlabel(xaxis_texts(angle_choice))
+xlabel('Angle (radians)')
 ylabel('B (mT)')
-text_label = {['Source: ',parameter_source],
-              ['Phi: ',num2str(phi),' Theta: ',num2str(theta),' Rho: ',num2str(rho)]};
+text_label = {['Source: ',parameter_source],['Rotation axis: ',num2str(axis)]};
 annotation('textbox',[.2 .5 .3 .3],'string',text_label,'FitBoxToText','on');
