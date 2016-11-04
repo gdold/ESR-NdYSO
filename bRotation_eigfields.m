@@ -69,9 +69,11 @@ for n = 0:rot_steps
     y1 = [y1 fields1];
     y2 = [y2 fields2];
     
-    cryst_mag_rot = Rot_inc*cryst_mag_rot; % perform rotation in crystal frame before converting to lab frame
+    cryst_mag_rot = cryst_mag_rot*Rot_inc; % perform rotation in crystal frame before converting to lab frame
 end
 
+figure
+hold off
 scatter(x,y1,'.')
 hold on
 scatter(x,y2,'.')
