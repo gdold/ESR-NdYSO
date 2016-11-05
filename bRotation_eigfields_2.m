@@ -29,12 +29,14 @@ Exp.Temperature = 20; %Kelvin
 
 %% Crystal rotation %%
 % [D1 D2 b]
-init_mag_vect = [1,0,0]; % a,c: [1,0,0], b:[0,1,0]
+init_mag_vect = [0,1,0]; % a,c: [1,0,0], b:[0,1,0]
 %rot_axis = [0 0 1]; % D1 D2 b
-%rot_axis = ang2vec(69.83*deg,3.75*deg)'; % Fig 4.4a % currently doesn't work
-%rot_axis = ang2vec(189.13*deg,96.21*deg)'; % Fig 4.4b
-rot_axis = ang2vec(89.72*deg,-92.77*deg)';% Fig 4.4c
-init_mag_rot = alignMagRot(init_mag_vect,rot_axis);
+%rot_axis = ang2vec(69.83*deg,3.75*deg); % Fig 4.4a % currently doesn't work
+rot_axis = ang2vec(189.13*deg,96.21*deg); % Fig 4.4b
+%rot_axis = ang2vec(89.72*deg,-92.77*deg);% Fig 4.4c
+
+init_mag_rot = alignMagRot(init_mag_vect);
+trans_rot_axis = init_mag_rot*rot_axis;
 
 Exp.CrystalOrientation = eulang(init_mag_rot); %Euler angles
 
@@ -52,9 +54,7 @@ rot_steps = 72;
 
 total_angle = 360*deg;
 
-
-
-Rot_inc = rotaxi2mat([1,0,0],total_angle/rot_steps);
+Rot_inc = rotaxi2mat(trans_rot_axis,total_angle/rot_steps);
 
 cryst_mag_rot = init_mag_rot;
 x = [];
