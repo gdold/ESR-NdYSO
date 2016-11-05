@@ -31,14 +31,14 @@ Exp.Temperature = 20; %Kelvin
 % [D1 D2 b]
 init_mag_vect = [0,1,0]; % a,c: [1,0,0], b:[0,1,0]
 %rot_axis = [0 0 1]; % D1 D2 b
-%rot_axis = ang2vec(69.83*deg,3.75*deg); % Fig 4.4a % currently doesn't work
-rot_axis = ang2vec(189.13*deg,96.21*deg); % Fig 4.4b
+%rot_axis = ang2vec(69.83*deg,3.75*deg); % Fig 4.4a
+rot_axis = ang2vec(189.13*deg,96.21*deg); % Fig 4.4b % Not quite right
 %rot_axis = ang2vec(89.72*deg,-92.77*deg);% Fig 4.4c
 
-init_mag_rot = alignMagRot(init_mag_vect);
-trans_rot_axis = init_mag_rot*rot_axis;
+init_rot = alignMagRot(init_mag_vect); % matrix
 
-Exp.CrystalOrientation = eulang(init_mag_rot); %Euler angles
+
+Exp.CrystalOrientation = eulang(init_rot); %Euler angles
 
 
 Opt = struct();
@@ -54,16 +54,17 @@ rot_steps = 72;
 
 total_angle = 360*deg;
 
-Rot_inc = rotaxi2mat(trans_rot_axis,total_angle/rot_steps);
+Rot_inc = rotaxi2mat(rot_axis,total_angle/rot_steps);
 
-cryst_mag_rot = init_mag_rot;
+cryst_rot = eye(3);
 x = [];
 y1 = [];
 y2 = [];
 for n = 0:rot_steps
     disp(n);
     angle = n*total_angle/rot_steps;
-    Exp.CrystalOrientation = eulang(cryst_mag_rot);
+    total_rot = init_rot*cryst_rot;
+    Exp.CrystalOrientation = eulang(total_rot);
     out = eigfields(Sys,Exp,Opt);
     fields1 = out{1}';
     fields2 = out{2}';
@@ -73,7 +74,7 @@ for n = 0:rot_steps
     y1 = [y1 fields1];
     y2 = [y2 fields2];
     
-    cryst_mag_rot = Rot_inc*cryst_mag_rot; % perform rotation in crystal frame before converting to lab frame
+    cryst_rot = Rot_inc*cryst_rot; % perform rotation in crystal frame before converting to lab frame
 end
 
 figure
