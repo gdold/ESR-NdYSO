@@ -42,16 +42,13 @@ init_mag_vect = [-0.156794;0.987480;-0.017280];
 % init_mag_vect = [0.99998808;-0.004875;-2.358e-04];
 
 % The initial rotation from the crystal frame to the lab frame is then
-init_mag_vect = init_mag_vect/norm(init_mag_vect);
-mag_field_rotation = vrrotvec(init_mag_vect,[0,0,1]);
-mag_field_rotm = rotaxi2mat(mag_field_rotation(1:3),mag_field_rotation(4));
-rot_axis_temp = mag_field_rotm*rot_axis;
-theta_offset = atan2(norm(cross([1,0,0],rot_axis_temp)),dot([1,0,0],rot_axis_temp));
-init_rotm = rotaxi2mat([0,0,-1],theta_offset)*mag_field_rotm;
+y_axis_in_cryst = cross(rot_axis,init_mag_vect); % true if rot,mag orthogonal
+init_rotm = [init_mag_vect,y_axis_in_cryst,rot_axis]'; % orthonormal?
+
 
 % Want a threshold intensity below which eigfields will ignore transition?
 Opt = struct();
-%Opt.Threshold = 100;
+%Opt.Threshold = 100;    eulang(cryst_rot_lab)
 
 % Number of steps in rotation simulation
 rot_steps = 72;
@@ -70,6 +67,8 @@ y2 = [];
 for n = 0:rot_steps
     disp(n);
     angle = n*total_angle/rot_steps;
+    %mag_vect_crystal = cryst_rot*init_mag_vect;
+    %Exp.CrystalOrientation = eulang(alignMagRot(mag_vect_crystal));
     Exp.CrystalOrientation = eulang(cryst_rot_lab);
     out = eigfields(Sys,Exp,Opt);
     fields1 = out{1}';
