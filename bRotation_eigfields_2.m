@@ -30,10 +30,14 @@ Exp.Temperature = 20; %Kelvin
 %% Crystal rotation %%
 % [D1 D2 b]
 init_mag_vect = [1,0,0]; % a,c: [1,0,0], b:[0,1,0]
-rot_axis = [0 0 1]; % D1 D2 b
-%rot_axis = ang2vec(69.83*deg,3.75*deg); % Fig 4.4a
+%rot_axis = [0 0 1]; % D1 D2 b
+rot_axis = ang2vec(69.83*deg,3.75*deg); % Fig 4.4a
 %rot_axis = ang2vec(189.13*deg,96.21*deg); % Fig 4.4b % Not quite right
 %rot_axis = ang2vec(89.72*deg,-92.77*deg);% Fig 4.4c
+
+%Find some axis orthogonal to rot_axis
+orth_axis = cross([0,0,1],rot_axis);
+init_mag_vect = orth_axis/norm(orth_axis);
 
 init_rot = alignMagRot(init_mag_vect); % matrix
 
