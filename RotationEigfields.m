@@ -32,31 +32,22 @@ Exp.Temperature = 20; %Kelvin
 
 % CHOOSE WHETHER TO REPRODUCE FIG. 4.4a, 4.4b, 4.4c
 % 4.4a
-%rot_axis = ang2vec(69.83*deg,3.75*deg); % Fig 4.4a
-%axis_wrt = [1,0,0]';
+% rot_axis = ang2vec(69.83*deg,3.75*deg); % Fig 4.4a
+% init_mag_vect = [0.999745;-0.001384;-0.022508];
 % 4.4b
 rot_axis = ang2vec(189.13*deg,96.21*deg); % Fig 4.4b
-axis_wrt = [0,1,0]';
+init_mag_vect = [-0.156794;0.987480;-0.017280];
 % 4.4c
-%rot_axis = ang2vec(89.72*deg,-92.77*deg);% Fig 4.4c
-%axis_wrt = [1,0,0]';
+% rot_axis = ang2vec(89.72*deg,-92.77*deg); % Fig 4.4c
+% init_mag_vect = [0.99998808;-0.004875;-2.358e-04];
 
-% Can define initial B field and rotation axis in crystal frame
-%init_mag_vect = [1,0,0]; % a,c: [1,0,0], b:[0,1,0]
-%rot_axis = [0 0 1]; % D1 D2 b
-
-% Relevant rotation axes for reproducing Maier-Flaig's figures
-%init_mag_approx = [1,0,0]; % a,c: [1,0,0], b:[0,1,0]
-
-% To reproduce Maier-Flaig's figures, need B-field orthogonal to rot_axis
-% as rot_axis along zL and B along xL
-orth_axis = cross([0,0,1],rot_axis);
-init_mag_vect = orth_axis/norm(orth_axis);
-
-% Rotate init_mag_vect to be close to reference axis
-proj = axis_wrt - dot(axis_wrt,rot_axis)*rot_axis;% projection onto normal plane
-theta_offset = atan2(norm(cross(proj,init_mag_vect)),dot(proj,init_mag_vect));
-init_mag_vect = rotaxi2mat(rot_axis,theta_offset)*init_mag_vect';
+% The initial rotation from the crystal frame to the lab frame is then
+init_mag_vect = init_mag_vect/norm(init_mag_vect);
+mag_field_rotation = vrrotvec(init_mag_vect,[0,0,1]);
+mag_field_rotm = rotaxi2mat(mag_field_rotation(1:3),mag_field_rotation(4));
+rot_axis_temp = mag_field_rotm*rot_axis;
+theta_offset = atan2(norm(cross([1,0,0],rot_axis_temp)),dot([1,0,0],rot_axis_temp));
+init_rotm = rotaxi2mat([0,0,-1],theta_offset)*mag_field_rotm;
 
 % Want a threshold intensity below which eigfields will ignore transition?
 Opt = struct();
@@ -69,16 +60,17 @@ total_angle = 360*deg;
 %% Calculate spectrum %%
 
 Rot_inc = rotaxi2mat(rot_axis,total_angle/rot_steps);
+Rot_inc_lab = rotaxi2mat([1,0,0],total_angle/rot_steps);
 
 cryst_rot = eye(3);
+cryst_rot_lab = init_rotm;
 x = [];
 y1 = [];
 y2 = [];
 for n = 0:rot_steps
     disp(n);
     angle = n*total_angle/rot_steps;
-    mag_vect_crystal = cryst_rot*init_mag_vect;
-    Exp.CrystalOrientation = eulang(alignMagRot(mag_vect_crystal));
+    Exp.CrystalOrientation = eulang(cryst_rot_lab);
     out = eigfields(Sys,Exp,Opt);
     fields1 = out{1}';
     fields2 = out{2}';
@@ -89,6 +81,7 @@ for n = 0:rot_steps
     y2 = [y2 fields2];
     
     cryst_rot = Rot_inc*cryst_rot;
+    cryst_rot_lab = Rot_inc_lab*cryst_rot_lab;
 end
 
 figure
