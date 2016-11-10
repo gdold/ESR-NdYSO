@@ -44,7 +44,7 @@ init_rotm = alignMagRot([0,1,0]);
 
 % Want a threshold intensity below which eigfields will ignore transition?
 Opt = struct();
-%Opt.Threshold = 0.1;
+Opt.Threshold = 0; % Get all transitions (incl forbidden)
 
 % Number of steps in rotation simulation
 rot_steps = 144;
@@ -71,30 +71,60 @@ Opt.Threshold = 0;
 
 max_field = 50;
 field_steps = 500;
+
+output = [];
+
 for n = 0:field_steps
     freqs = [];
     disp(n);
-    field = n*max_field/field_steps;
-    Exp.Field = field;
+    mag_field = n*max_field/field_steps;
+    Exp.Field = mag_field;
     Exp.CrystalOrientation = eulang(cryst_rot);
     [Pos,Amp,Wid,Trans] = resfreqs_matrix(Sys,Exp,Opt);
-    out = [Pos,Amp]';
-    for i = 1:length(out)
-        if out(2,i) >= threshold
-            freqs = [freqs out(1,i)];
+    transition_label = Trans(:,1)*100 + Trans(:,2);% label x->y by int xxyy, works only if <100 transitions
+    field = repelem(mag_field,length(Pos))';
+    out = [field,Pos,Amp,transition_label]; % label is cast to double
+    output = [output; out];
+    for i = 1:1:length(out)
+        %if out(i,3) >= threshold
+        %if (out(i,4) == 15) && (out(i,5) == 16)
+        if 1
+            freqs = [freqs out(i,2)];
         end
     end
     %fields1 = out{1}';
     %fields2 = out{2}';
     %freqs = out(1,:);
-    x_temp = linspace(field,field,length(freqs));
+    %x_temp = linspace(mag_field,mag_field,length(freqs));
     
-    x = [x x_temp];
+    %x = [x x_temp];
     %y1 = [y1 fields1];
     %y2 = [y2 fields2];
-    y = [y freqs];
+    %y = [y freqs];
     
 end
+
+% Find transitions with large amplitude
+largeamp = [];
+threshold = 0.2;
+output(:,3) = output(:,3)/max(output(:,3));
+for i = 1:length(output(:,3))
+    if output(i,3) > threshold
+        largeamp = [largeamp; output(i,4)];
+    end
+end
+largeamp = unique(largeamp);
+
+% Create array containing only these transitions
+transitions = [];
+for i = 1:length(output(:,4))
+    if any(abs( output(i,4) - largeamp )<1e-10) % transition has a large amplitude at some point
+        transitions = [transitions; output(i,:)];
+    end
+end
+
+x = transitions(:,1);
+y = transitions(:,2);
 
 % for n = 0:rot_steps
 %     freqs = [];
@@ -129,7 +159,7 @@ hold off
 scatter(x,y,'.')
 hold on
 %scatter(x,y2,'.')
-xlabel('Angle (degrees)')
-ylabel('B (mT)')
-text_label = {['Source: ',parameter_source],['Rotation axis: ',num2str(rot_axis')]};
-annotation('textbox',[.2 .5 .3 .3],'string',text_label,'FitBoxToText','on');
+xlabel('B (mT)')
+ylabel('Freq (MHz)')
+%text_label = {['Source: ',parameter_source],['Rotation axis: ',num2str(rot_axis')]};
+%annotation('textbox',[.2 .5 .3 .3],'string',text_label,'FitBoxToText','on');
