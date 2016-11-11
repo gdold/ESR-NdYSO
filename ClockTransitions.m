@@ -24,7 +24,7 @@ Sys = NdYSOparams(Sys,parameter_source); % Appends chosen parameters to Sys
 Exp = struct();
 %Exp.mwFreq = 9.385; %GHz % 9.7 perhaps?
 Exp.Range = [0 3]; %mT % [350 600]
-%Exp.CrystalSymmetry = 'C2h'; %monoclinic C^6_2h spacegroup 
+Exp.CrystalSymmetry = 'C2h'; %monoclinic C^6_2h spacegroup 
 Exp.Temperature = 20; %Kelvin
 
 %% Crystal rotation %%
@@ -37,7 +37,7 @@ init_rotm = [0,0,1; %  b->x
 rt = 1.0/sqrt(2);
 init_rotm = rotaxi2mat([rt,0,rt],180*deg);
 
-init_rotm = alignMagRot([0,1,0]);
+init_rotm = alignMagRot([1,0,0]);
 
 % The initial rotation from the crystal frame to the lab frame is then
 
@@ -45,6 +45,7 @@ init_rotm = alignMagRot([0,1,0]);
 % Want a threshold intensity below which eigfields will ignore transition?
 Opt = struct();
 Opt.Threshold = 0; % Get all transitions (incl forbidden)
+Opt.Sites = [2];
 
 % Number of steps in rotation simulation
 rot_steps = 144;
@@ -81,6 +82,9 @@ for n = 0:field_steps
     Exp.Field = mag_field;
     Exp.CrystalOrientation = eulang(cryst_rot);
     [Pos,Amp,Wid,Trans] = resfreqs_matrix(Sys,Exp,Opt);
+    if length(Trans)<length(Pos)
+        Trans = [Trans;Trans]; % Add extra labels for simulation of site 2
+    end
     transition_label = Trans(:,1)*100 + Trans(:,2);% label x->y by int xxyy, works only if <100 transitions
     field = repelem(mag_field,length(Pos))';
     out = [field,Pos,Amp,transition_label]; % label is cast to double
@@ -106,7 +110,7 @@ end
 
 % Find transitions with large amplitude
 largeamp = [];
-threshold = 0.2;
+threshold = 0.1;
 output(:,3) = output(:,3)/max(output(:,3));
 for i = 1:length(output(:,3))
     if output(i,3) > threshold
@@ -123,8 +127,9 @@ for i = 1:length(output(:,4))
     end
 end
 
-x = transitions(:,1);
-y = transitions(:,2);
+x = transitions(:,1); % field
+y = transitions(:,2); % freq
+z = transitions(:,3); % intensity
 
 % for n = 0:rot_steps
 %     freqs = [];
@@ -154,9 +159,15 @@ y = transitions(:,2);
 % end
 
 figure
+
 hold off
 %scatter(x,y1,'.')
-scatter(x,y,'.')
+scatter(x,y,[],z,'.')
+colormap(flipud(hot))
+cbar = colorbar();
+cbar.Label.String = 'Relative amplitude';
+caxis([0.0,1.0])
+ylim([0,3000])
 hold on
 %scatter(x,y2,'.')
 xlabel('B (mT)')
