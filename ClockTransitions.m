@@ -184,7 +184,7 @@ for step = 0:rot_steps
     %hold on
     %scatter(x,y2,'.')
     xlabel('B (mT)')
-    ylabel('Freq (MHz)')
+    ylabel('Transition frequency (MHz)')
     title(['Init axis: ',init_axis_str,'; Rot axis: ',rot_axis_str,'; angle: ',num2str(angle/deg)])
     saveas(gcf,['figure',int2str(step),'.png'])
     %text_label = {['Source: ',parameter_source],['Rotation axis: ',num2str(rot_axis')]};
