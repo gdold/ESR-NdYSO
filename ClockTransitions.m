@@ -45,7 +45,7 @@ init_rotm = alignMagRot([1,0,0]);
 % Want a threshold intensity below which eigfields will ignore transition?
 Opt = struct();
 Opt.Threshold = 0; % Get all transitions (incl forbidden)
-Opt.Sites = [2];
+Opt.Sites = [1,2];
 
 % Number of steps in rotation simulation
 rot_steps = 144;
@@ -82,12 +82,14 @@ for n = 0:field_steps
     Exp.Field = mag_field;
     Exp.CrystalOrientation = eulang(cryst_rot);
     [Pos,Amp,Wid,Trans] = resfreqs_matrix(Sys,Exp,Opt);
+    Site = repelem(Opt.Sites(1),length(Trans))';
     if length(Trans)<length(Pos)
         Trans = [Trans;Trans]; % Add extra labels for simulation of site 2
+        Site = [repelem(Opt.Sites(1),length(Site))';repelem(Opt.Sites(2),length(Site))'];
     end
     transition_label = Trans(:,1)*100 + Trans(:,2);% label x->y by int xxyy, works only if <100 transitions
     field = repelem(mag_field,length(Pos))';
-    out = [field,Pos,Amp,transition_label]; % label is cast to double
+    out = [field,Pos,Amp,transition_label,Site]; % label is cast to double
     output = [output; out];
     for i = 1:1:length(out)
         %if out(i,3) >= threshold
