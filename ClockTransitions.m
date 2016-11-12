@@ -23,7 +23,7 @@ Sys = NdYSOparams(Sys,parameter_source); % Appends chosen parameters to Sys
 
 Exp = struct();
 %Exp.mwFreq = 9.385; %GHz % 9.7 perhaps?
-Exp.Range = [0 3]; %mT % [350 600]
+Exp.Range = [0 10]; %mT % [350 600]
 Exp.CrystalSymmetry = 'C2h'; %monoclinic C^6_2h spacegroup 
 Exp.Temperature = 20; %Kelvin
 
@@ -35,10 +35,16 @@ init_rotm = [0,0,1; %  b->x
              0,-1,0;% D2->-y
              1,0,0];% D1->z
 rt = 1.0/sqrt(2);
-init_rotm = rotaxi2mat([rt,0,rt],180*deg);
+%init_rotm = rotaxi2mat([rt,0,rt],180*deg); % B along D1
+init_rotm = rotaxi2mat([0,rt,rt],180*deg); % B along D2
+%init_rotm = eye(3); % B along b
 
-init_axis = [1,0,0];
-init_rotm = alignMagRot(init_axis);
+
+%init_mag_vect = [0.999745;-0.001384;-0.022508]; % a
+%init_mag_vect = [-0.156794;0.987480;-0.017280]; % b
+%init_mag_vect = [0.99998808;-0.004875;-2.358e-04]; % c
+%init_mag_vect = [7.38315318831557e-08;0.0483278568510295;-0.998831517134350]; % c
+%init_rotm = alignMagRot(init_mag_vect);
 
 rot_axis = [0,0,1];
 
@@ -57,7 +63,7 @@ total_angle = 360*deg;
 %% Calculate spectrum %%
 
 Rot_inc = rotaxi2mat(rot_axis,total_angle/rot_steps);
-Rot_inc_lab = rotaxi2mat([1,0,0],-total_angle/rot_steps);
+%Rot_inc_lab = rotaxi2mat([1,0,0],-total_angle/rot_steps);
 Rot_inc_lab = eye(3);
 
 cryst_rot = init_rotm;
@@ -76,6 +82,7 @@ Opt.Threshold = 0;
 max_field = 50;
 field_steps = 500;
 
+rot_steps = 0; % No angular sweep
 
 for step = 0:rot_steps
     disp(['Step ',int2str(step),' of ',int2str(rot_steps)]);
@@ -170,7 +177,7 @@ for step = 0:rot_steps
     % end
     
     %figure
-    init_axis_str = 'D1';
+    init_axis_str = 'D2';
     rot_axis_str = 'b';
     
     %hold off
@@ -185,7 +192,9 @@ for step = 0:rot_steps
     %scatter(x,y2,'.')
     xlabel('B (mT)')
     ylabel('Transition frequency (MHz)')
-    title(['Init axis: ',init_axis_str,'; Rot axis: ',rot_axis_str,'; angle: ',num2str(angle/deg)])
+    title(['Mag vector: ',num2str(init_mag_vect')])
+    findClockTransitions;
+    %title(['Init axis: ',init_axis_str,'; Rot axis: ',rot_axis_str,'; angle: ',num2str(angle/deg)])
     saveas(gcf,['figure',int2str(step),'.png'])
     %text_label = {['Source: ',parameter_source],['Rotation axis: ',num2str(rot_axis')]};
     %annotation('textbox',[.2 .5 .3 .3],'string',text_label,'FitBoxToText','on');
