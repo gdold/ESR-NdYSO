@@ -26,7 +26,7 @@ Exp = struct();
 Exp.Range = [0 3]; %mT % [350 600]
 Exp.CrystalSymmetry = 'C2h'; %monoclinic C^6_2h spacegroup 
 Exp.Temperature = 20; %Kelvin
-Exp.Mode = 'parallel'; % direction of MW field
+Exp.Mode = 'perpendicular'; % direction of MW field, 'perpendicular' or 'parallel'
 
 %% Crystal rotation %%
 % Axes defined in crystal basis [D1 D2 b]
@@ -41,7 +41,7 @@ init_rotm = rotaxi2mat([0,rt,rt],180*deg);% B along D2
 %init_rotm = eye(3); % B along b
 
 % MW field is along lab x axis
-init_rotm = rotaxi2mat([0,0,1],90*deg)*init_rotm; % change axis of applied MW
+%init_rotm = rotaxi2mat([0,0,1],90*deg)*init_rotm; % change axis of applied MW
 
 
 
@@ -51,7 +51,7 @@ init_rotm = rotaxi2mat([0,0,1],90*deg)*init_rotm; % change axis of applied MW
 %init_mag_vect = [7.38315318831557e-08;0.0483278568510295;-0.998831517134350]; % c
 %init_rotm = alignMagRot(init_mag_vect);
 
-rot_axis = [0,0,1];
+rot_axis = [0,1,0];
 
 % The initial rotation from the crystal frame to the lab frame is then
 
@@ -62,9 +62,7 @@ Opt.Threshold = 0; % Get all transitions (incl forbidden)
 %Opt.Sites = [1,2];
 Opt.Sites = [1];
 
-% Number of steps in rotation simulation
-rot_steps = 72;
-total_angle = 360*deg;
+
 
 %% Calculate spectrum %%
 
@@ -81,10 +79,13 @@ Exp.mwFreq = 2.0; % GHz
 threshold = 0.1*0.01;
 Opt.Threshold = 0;
 
+% Set up field sweep
 max_field = 50;
 field_steps = 50;
 
-rot_steps = 4; % 0 for no angular sweep
+% Set up rotation
+total_angle = 360*deg;
+rot_steps = 8; % 0 for no angular sweep
 
 Rot_inc = rotaxi2mat(rot_axis,total_angle/rot_steps);
 %Rot_inc_lab = rotaxi2mat([1,0,0],-total_angle/rot_steps);
@@ -116,13 +117,10 @@ for step = 0:rot_steps
     full(step+1).angle = angle;
     
     
-    %output = [];
     Pos = [];
     Amp = [];
-    %Wid = [];
     Trans = [];
     Site = [];
-    %out = [];
     
     dat = dat_empty();
     %dat.angle = angle;
@@ -141,13 +139,14 @@ for step = 0:rot_steps
             Trans = [Trans;Trans]; % Add extra labels for simulation of site 2
             Site = [repelem(Opt.Sites(1),length(Site))';repelem(Opt.Sites(2),length(Site))'];
         end
-        transition_label = Trans(:,1)*100 + Trans(:,2);% label x->y by int xxyy, works only if <100 transitions
+        transition_label = Site(:)*10000 + Trans(:,1)*100 + Trans(:,2);% label x->y by int xxyy, works only if <100 transitions
         field = repelem(mag_field,length(Pos))';
         %out = [field,Pos,Amp,transition_label,Site];% label is cast to double
-        dat(1).transition = [1 2]; % prevent duplicate...
-        dat(1).label = 0102;
         
-        for i = 1:length(Trans) % overhead about 10%
+        dat(1).transition = [1 2]; % prevent duplicate...
+        dat(1).label = 10102; % lazy hack...
+        
+        for i = 1:length(Trans)
             [in,loc] = ismember(transition_label(i),[dat(:).label]);
             if ~in
                 dat(end+1) = dat_empty;
@@ -156,10 +155,11 @@ for step = 0:rot_steps
             dat(loc).transition = Trans(i,:);
             dat(loc).label = transition_label(i);
             dat(loc).site = Site(i);
-            dat(loc).frequency(n+1) = Pos(i);
-            dat(loc).field(n+1) = mag_field;
-            dat(loc).amplitude(n+1) = Amp(i);
+            dat(loc).frequency(n+1) = Pos(i)';
+            dat(loc).field(n+1) = mag_field';
+            dat(loc).amplitude(n+1) = Amp(i)';
         end
+        
 %         output = [output; out];
 %         for i = 1:1:length(out)
 %             %if out(i,3) >= threshold
@@ -182,35 +182,48 @@ for step = 0:rot_steps
     
     
     % Find only strong transitions
+    strong_transitions = [];
     transitions = [];
     threshold = 0.1;
     for i = 1:length(dat)
         dat(i).peak_amplitude = max(dat(i).amplitude);
     end
-    highest_amplitude = max([dat(:).peak_amplitude]);
+    max_amplitude = max([dat(:).peak_amplitude]);
     for i = 1:length(dat)
-        if dat(i).peak_amplitude > threshold*highest_amplitude
-            transitions = [transitions; [dat(i).field, dat(i).frequency, dat(i).amplitude/highest_amplitude, repelem(dat(i).label,field_steps+1,1), repelem(dat(i).site,field_steps+1,1)]];
+        if dat(i).peak_amplitude > threshold*max_amplitude
+            strong_transitions = [strong_transitions; i];
         end
     end
+%     for i = 1:length(dat)
+%         if dat(i).peak_amplitude > threshold*max_amplitude
+%             transitions = [transitions; [dat(i).field, dat(i).frequency, dat(i).amplitude/max_amplitude, repelem(dat(i).label,field_steps+1,1), repelem(dat(i).site,field_steps+1,1)]];
+%         end
+%     end
        
         
-    x = transitions(:,1); % field
-    y = transitions(:,2); % freq
-    z = transitions(:,3); % intensity
+%     x = transitions(:,1); % field
+%     y = transitions(:,2); % freq
+%     z = transitions(:,3); % intensity
+
+    x = [dat(strong_transitions).field];
+    x = x(:); % make column vector
+    y = [dat(strong_transitions).frequency];
+    y = y(:);
+    z = [dat(strong_transitions).amplitude];
+    z = z(:);
     
     %figure
     init_axis_str = 'D2';
-    rot_axis_str = 'b';
-    MW_axis_str = '-b';
+    rot_axis_str = 'D2';
+    MW_axis_str = '-D1';
     
     %hold off
-    %scatter(x,y1,'.')
+    %scatter(x,y,'.')
     scatter(x,y,[],z,'.')
     colormap(flipud(hot))
     cbar = colorbar();
     cbar.Label.String = 'Relative amplitude';
-    caxis([0.0,1.0])
+    %caxis([0.0,1.0])
     ylim([0,3000])
     %hold on
     %scatter(x,y2,'.')
@@ -219,7 +232,7 @@ for step = 0:rot_steps
     %title(['Mag vector: ',num2str(init_mag_vect')])
     title(['Mag axis: ',init_axis_str,'; MW axis: ',MW_axis_str,'; Rot axis: ',rot_axis_str,'; angle: ',num2str(angle/deg)])
     findClockTransitions;
-    %saveas(gcf,['figure',int2str(5*step),'.png'])
+    saveas(gcf,['figure',int2str(5*step),'.png'])
     %save(['output',int2str(5*step),'.mat'],'output')
     %text_label = {['Source: ',parameter_source],['Rotation axis: ',num2str(rot_axis')]};
     %annotation('textbox',[.2 .5 .3 .3],'string',text_label,'FitBoxToText','on');
@@ -229,4 +242,4 @@ for step = 0:rot_steps
     cryst_rot = Rot_inc_lab*cryst_rot*Rot_inc'; %Inverse crystal rotation
 end
 
-
+save(['full_',datestr(now,'yyyy-MM-ddTHH-mm-ss'),'.mat'],'full')
