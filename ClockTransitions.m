@@ -23,9 +23,10 @@ Sys = NdYSOparams(Sys,parameter_source); % Appends chosen parameters to Sys
 
 Exp = struct();
 %Exp.mwFreq = 9.385; %GHz % 9.7 perhaps?
-Exp.Range = [0 10]; %mT % [350 600]
+Exp.Range = [0 3]; %mT % [350 600]
 Exp.CrystalSymmetry = 'C2h'; %monoclinic C^6_2h spacegroup 
 Exp.Temperature = 20; %Kelvin
+Exp.Mode = 'parallel'; % direction of MW field
 
 %% Crystal rotation %%
 % Axes defined in crystal basis [D1 D2 b]
@@ -36,8 +37,12 @@ init_rotm = [0,0,1; %  b->x
              1,0,0];% D1->z
 rt = 1.0/sqrt(2);
 %init_rotm = rotaxi2mat([rt,0,rt],180*deg); % B along D1
-init_rotm = rotaxi2mat([0,rt,rt],180*deg); % B along D2
+init_rotm = rotaxi2mat([0,rt,rt],180*deg);% B along D2
 %init_rotm = eye(3); % B along b
+
+% MW field is along lab x axis
+init_rotm = rotaxi2mat([0,0,1],90*deg)*init_rotm; % change axis of applied MW
+
 
 
 %init_mag_vect = [0.999745;-0.001384;-0.022508]; % a
@@ -54,7 +59,8 @@ rot_axis = [0,0,1];
 % Want a threshold intensity below which eigfields will ignore transition?
 Opt = struct();
 Opt.Threshold = 0; % Get all transitions (incl forbidden)
-Opt.Sites = [1,2];
+%Opt.Sites = [1,2];
+Opt.Sites = [1];
 
 % Number of steps in rotation simulation
 rot_steps = 72;
@@ -62,9 +68,7 @@ total_angle = 360*deg;
 
 %% Calculate spectrum %%
 
-Rot_inc = rotaxi2mat(rot_axis,total_angle/rot_steps);
-%Rot_inc_lab = rotaxi2mat([1,0,0],-total_angle/rot_steps);
-Rot_inc_lab = eye(3);
+
 
 cryst_rot = init_rotm;
 cryst_rot_lab = init_rotm;
@@ -82,7 +86,11 @@ Opt.Threshold = 0;
 max_field = 50;
 field_steps = 500;
 
-rot_steps = 0; % No angular sweep
+rot_steps = 72; % 0 for no angular sweep
+
+Rot_inc = rotaxi2mat(rot_axis,total_angle/rot_steps);
+%Rot_inc_lab = rotaxi2mat([1,0,0],-total_angle/rot_steps);
+Rot_inc_lab = eye(3);
 
 for step = 0:rot_steps
     disp(['Step ',int2str(step),' of ',int2str(rot_steps)]);
@@ -90,6 +98,12 @@ for step = 0:rot_steps
 
     
     output = [];
+    Pos = [];
+    Amp = [];
+    Wid = [];
+    Trans = [];
+    Site = [];
+    out = [];
     
     for n = 0:field_steps
         freqs = [];
@@ -179,6 +193,7 @@ for step = 0:rot_steps
     %figure
     init_axis_str = 'D2';
     rot_axis_str = 'b';
+    MW_axis_str = '-b';
     
     %hold off
     %scatter(x,y1,'.')
@@ -192,10 +207,11 @@ for step = 0:rot_steps
     %scatter(x,y2,'.')
     xlabel('B (mT)')
     ylabel('Transition frequency (MHz)')
-    title(['Mag vector: ',num2str(init_mag_vect')])
+    %title(['Mag vector: ',num2str(init_mag_vect')])
+    title(['Mag axis: ',init_axis_str,'; MW axis: ',MW_axis_str,'; Rot axis: ',rot_axis_str,'; angle: ',num2str(angle/deg)])
     findClockTransitions;
-    %title(['Init axis: ',init_axis_str,'; Rot axis: ',rot_axis_str,'; angle: ',num2str(angle/deg)])
-    saveas(gcf,['figure',int2str(step),'.png'])
+    saveas(gcf,['figure',int2str(5*step),'.png'])
+    save(['output',int2str(5*step),'.mat'],'output')
     %text_label = {['Source: ',parameter_source],['Rotation axis: ',num2str(rot_axis')]};
     %annotation('textbox',[.2 .5 .3 .3],'string',text_label,'FitBoxToText','on');
     
