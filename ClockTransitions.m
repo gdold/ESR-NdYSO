@@ -26,7 +26,7 @@ Exp = struct();
 Exp.Range = [0 3]; %mT % [350 600]
 Exp.CrystalSymmetry = 'C2h'; %monoclinic C^6_2h spacegroup 
 Exp.Temperature = 20; %Kelvin
-Exp.Mode = 'perpendicular'; % direction of MW field, 'perpendicular' or 'parallel'
+Exp.Mode = 'parallel'; % direction of MW field, 'perpendicular' or 'parallel'
 
 %% Crystal rotation %%
 % Axes defined in crystal basis [D1 D2 b]
@@ -41,7 +41,7 @@ init_rotm = rotaxi2mat([0,rt,rt],180*deg);% B along D2
 %init_rotm = eye(3); % B along b
 
 % MW field is along lab x axis
-%init_rotm = rotaxi2mat([0,0,1],90*deg)*init_rotm; % change axis of applied MW
+init_rotm = rotaxi2mat([0,0,1],180*deg)*init_rotm; % change axis of applied MW
 
 
 
@@ -81,11 +81,11 @@ Opt.Threshold = 0;
 
 % Set up field sweep
 max_field = 50;
-field_steps = 50;
+field_steps = 500;
 
 % Set up rotation
 total_angle = 360*deg;
-rot_steps = 8; % 0 for no angular sweep
+rot_steps = 0; % 0 for no angular sweep
 
 Rot_inc = rotaxi2mat(rot_axis,total_angle/rot_steps);
 %Rot_inc_lab = rotaxi2mat([1,0,0],-total_angle/rot_steps);
@@ -180,30 +180,8 @@ for step = 0:rot_steps
         
     end
     
-    
-    % Find only strong transitions
-    strong_transitions = [];
-    transitions = [];
     threshold = 0.1;
-    for i = 1:length(dat)
-        dat(i).peak_amplitude = max(dat(i).amplitude);
-    end
-    max_amplitude = max([dat(:).peak_amplitude]);
-    for i = 1:length(dat)
-        if dat(i).peak_amplitude > threshold*max_amplitude
-            strong_transitions = [strong_transitions; i];
-        end
-    end
-%     for i = 1:length(dat)
-%         if dat(i).peak_amplitude > threshold*max_amplitude
-%             transitions = [transitions; [dat(i).field, dat(i).frequency, dat(i).amplitude/max_amplitude, repelem(dat(i).label,field_steps+1,1), repelem(dat(i).site,field_steps+1,1)]];
-%         end
-%     end
-       
-        
-%     x = transitions(:,1); % field
-%     y = transitions(:,2); % freq
-%     z = transitions(:,3); % intensity
+    strong_transitions = findStrongTransitions(dat,threshold);
 
     x = [dat(strong_transitions).field];
     x = x(:); % make column vector
@@ -222,7 +200,7 @@ for step = 0:rot_steps
     scatter(x,y,[],z,'.')
     colormap(flipud(hot))
     cbar = colorbar();
-    cbar.Label.String = 'Relative amplitude';
+    cbar.Label.String = 'Amplitude';
     %caxis([0.0,1.0])
     ylim([0,3000])
     %hold on
@@ -230,9 +208,12 @@ for step = 0:rot_steps
     xlabel('B (mT)')
     ylabel('Transition frequency (MHz)')
     %title(['Mag vector: ',num2str(init_mag_vect')])
-    title(['Mag axis: ',init_axis_str,'; MW axis: ',MW_axis_str,'; Rot axis: ',rot_axis_str,'; angle: ',num2str(angle/deg)])
+    %title(['Mag axis: ',init_axis_str,'; MW axis: ',MW_axis_str,'; Rot axis: ',rot_axis_str,'; angle: ',num2str(angle/deg)])
+    tit = 'TEST';
+    title(tit);
     findClockTransitions;
-    saveas(gcf,['figure',int2str(5*step),'.png'])
+    %saveas(gcf,['figure',int2str(5*step),'.png'])
+    saveas(gcf,[tit,'.png'])
     %save(['output',int2str(5*step),'.mat'],'output')
     %text_label = {['Source: ',parameter_source],['Rotation axis: ',num2str(rot_axis')]};
     %annotation('textbox',[.2 .5 .3 .3],'string',text_label,'FitBoxToText','on');
@@ -242,4 +223,4 @@ for step = 0:rot_steps
     cryst_rot = Rot_inc_lab*cryst_rot*Rot_inc'; %Inverse crystal rotation
 end
 
-save(['full_',datestr(now,'yyyy-MM-ddTHH-mm-ss'),'.mat'],'full')
+save(['full_',datestr(now,'yyyy-mm-ddTHH-MM-SS'),'.mat'],'full')
