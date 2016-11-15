@@ -34,10 +34,10 @@ Opt.Sites = 1; % [1,2] for both YSO sites
 % Set up field sweep parameters
 max_field = 50;
 field_steps = 500;
-magaxis = 'D1';
-MWaxis = 'D2';
+magaxis = 'D2';
+MWaxis = 'b';
 [init_rotm, Exp.Mode] = setInitialAxes(magaxis,MWaxis); % currently only crystal axes
-Exp.Mode = [0,90*deg];
+%Exp.Mode = [90*deg,0*deg];
 
 % Set up rotation parameters
 rotaxis = 'D1'; % set this manually
@@ -141,12 +141,13 @@ for step = 0:rot_steps
     xlabel('B (mT)')
     ylabel('Transition frequency (MHz)')
     title(['Mag axis: ',magaxis,'; MW axis: ',MWaxis,'; Rot axis: ',rotaxis,'; angle: ',num2str(angle/deg)])
-    findClockTransitions;
+    clocks = findClockTransitions(dat,threshold);
     %saveas(gcf,['figure',int2str(5*step),'.png'])
     %text_label = {['Source: ',parameter_source],['Rotation axis: ',num2str(rot_axis')]};
     %annotation('textbox',[.2 .5 .3 .3],'string',text_label,'FitBoxToText','on');
     
     full(step+1).data = dat;
+    full(step+1).clocks = clocks;
     
     cryst_rot = Rot_inc_lab*cryst_rot*Rot_inc'; %Inverse crystal rotation
 end
