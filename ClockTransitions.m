@@ -19,37 +19,21 @@ Sys = NdYSOparams(Sys,parameter_source); % Appends chosen parameters to Sys
 % The eigenvaues M-F Tensor do not match up with
 % M-F Principal - is this right?!
 
-%% Experiment properties %%
+%% Experimental parameters %%
 
 Exp = struct();
 %Exp.mwFreq = 9.385; %GHz % 9.7 perhaps?
 Exp.Range = [0 3]; %mT % [350 600]
 Exp.CrystalSymmetry = 'C2h'; %monoclinic C^6_2h spacegroup 
 Exp.Temperature = 20; %Kelvin
-Exp.Mode = 'parallel'; % direction of MW field, 'perpendicular' or 'parallel'
+Exp.Mode = 'perpendicular'; % direction of MW field, 'perpendicular' or 'parallel'
 
 %% Crystal rotation %%
 % Axes defined in crystal basis [D1 D2 b]
 
-% DIRECT MAGNETIC FIELD ALONG D1
-init_rotm = [0,0,1; %  b->x
-             0,-1,0;% D2->-y
-             1,0,0];% D1->z
-rt = 1.0/sqrt(2);
-%init_rotm = rotaxi2mat([rt,0,rt],180*deg); % B along D1
-init_rotm = rotaxi2mat([0,rt,rt],180*deg);% B along D2
-%init_rotm = eye(3); % B along b
-
-% MW field is along lab x axis
-init_rotm = rotaxi2mat([0,0,1],180*deg)*init_rotm; % change axis of applied MW
-
-
-
-%init_mag_vect = [0.999745;-0.001384;-0.022508]; % a
-%init_mag_vect = [-0.156794;0.987480;-0.017280]; % b
-%init_mag_vect = [0.99998808;-0.004875;-2.358e-04]; % c
-%init_mag_vect = [7.38315318831557e-08;0.0483278568510295;-0.998831517134350]; % c
-%init_rotm = alignMagRot(init_mag_vect);
+magaxis = 'b';
+MWaxis = 'b';
+[init_rotm, Exp.Mode] = setInitialAxes(magaxis,MWaxis); % currently only crystal axes
 
 rot_axis = [0,1,0];
 
@@ -160,24 +144,6 @@ for step = 0:rot_steps
             dat(loc).amplitude(n+1) = Amp(i)';
         end
         
-%         output = [output; out];
-%         for i = 1:1:length(out)
-%             %if out(i,3) >= threshold
-%             %if (out(i,4) == 15) && (out(i,5) == 16)
-%             if 1
-%                 freqs = [freqs out(i,2)];
-%             end
-%         end
-        %fields1 = out{1}';
-        %fields2 = out{2}';
-        %freqs = out(1,:);
-        %x_temp = linspace(mag_field,mag_field,length(freqs));
-        
-        %x = [x x_temp];
-        %y1 = [y1 fields1];
-        %y2 = [y2 fields2];
-        %y = [y freqs];
-        
     end
     
     threshold = 0.1;
@@ -191,9 +157,7 @@ for step = 0:rot_steps
     z = z(:);
     
     %figure
-    init_axis_str = 'D2';
     rot_axis_str = 'D2';
-    MW_axis_str = '-D1';
     
     %hold off
     %scatter(x,y,'.')
@@ -208,12 +172,12 @@ for step = 0:rot_steps
     xlabel('B (mT)')
     ylabel('Transition frequency (MHz)')
     %title(['Mag vector: ',num2str(init_mag_vect')])
-    %title(['Mag axis: ',init_axis_str,'; MW axis: ',MW_axis_str,'; Rot axis: ',rot_axis_str,'; angle: ',num2str(angle/deg)])
-    tit = 'TEST';
-    title(tit);
+    title(['Mag axis: ',magaxis,'; MW axis: ',MWaxis,'; Rot axis: ',rot_axis_str,'; angle: ',num2str(angle/deg)])
+    %tit = 'TEST';
+    %title(tit);
     findClockTransitions;
     %saveas(gcf,['figure',int2str(5*step),'.png'])
-    saveas(gcf,[tit,'.png'])
+    %saveas(gcf,[tit,'.png'])
     %save(['output',int2str(5*step),'.mat'],'output')
     %text_label = {['Source: ',parameter_source],['Rotation axis: ',num2str(rot_axis')]};
     %annotation('textbox',[.2 .5 .3 .3],'string',text_label,'FitBoxToText','on');
