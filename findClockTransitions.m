@@ -10,11 +10,10 @@ function clocks = findClockTransitions(dat,threshold)
 
 % if both sites look at site 1 only
 % CURRENTLY BROKEN - can only simulate 1 site anyway
+bothsites = false;
 if any([dat(:).site] == 1) && any([dat(:).site] == 2)
-    disp('Simulation contains both sites, stripping out site 2...')
-    selected_transitions([dat(selected_transitions).site] == 2) = [];
-    %match = clock_data(:,5)~=1;
-    %clock_data(match,:) = []; % strip out site 2
+    disp('Clock transitions for site 1 only')
+    bothsites = true;
 end
 
 AllClocks = [];
@@ -22,6 +21,9 @@ clocks = struct();
 
 
 for transition = 1:length(dat)
+    if bothsites && (dat(transition).site == 2)
+        continue;
+    end
     frequency = dat(transition).frequency;
     field = dat(transition).field;
     amplitude = dat(transition).amplitude;

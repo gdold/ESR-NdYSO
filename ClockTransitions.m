@@ -26,14 +26,14 @@ Exp.Temperature = 20; %Kelvin
 % Want a threshold intensity below which eigfields will ignore transition?
 Opt = struct();
 Opt.Threshold = 0; % Get all transitions (incl forbidden)
-Opt.Sites = 1; % [1,2] for both YSO sites
+Opt.Sites = [1,2]; % [1,2] for both YSO sites
 
 %% Sweep parameters %%
 % Axes defined in crystal basis [D1 D2 b]
 
 % Set up field sweep parameters
 max_field = 50;
-field_steps = 500;
+field_steps = 50;
 magaxis = 'D2';
 MWaxis = 'b';
 [init_rotm, Exp.Mode] = setInitialAxes(magaxis,MWaxis); % currently only crystal axes
