@@ -1,14 +1,9 @@
 function [init_rotm, mode] = setInitialAxes(magaxis,MWaxis)
 % Sets initial magnetic field axis and MW axis 
-% along given crystal axis denoted by x,y,z or D1,D2,b
+% along given crystal axis denoted by u,v,w or D1,D2,b
 % by outputting a rotation matrix and mode
 % to transform the crystal frame to the
 % lab x,y,z. 
-%
-% Using x,y,z to denote the crystal axes is to be avoided
-% due to confusion with lab x,y,z but is done here for
-% compatibility with other frame conventions, which can be added
-% by editing the first sets of if/else statements
 %
 % Only works for MWaxis and MW axis that are along the
 % crystal principal axes.
@@ -17,12 +12,12 @@ deg = pi/180;
 rt = 1.0/sqrt(2);
 
 % Sanitise input
-if strcmp(magaxis,'x') || strcmp(magaxis,'D1')
-    magaxis = 'x';
-elseif strcmp(magaxis,'y') || strcmp(magaxis,'D2')
-    magaxis = 'y';
-elseif strcmp(magaxis,'z') || strcmp(magaxis,'b')
-    magaxis = 'z';
+if strcmp(magaxis,'u') || strcmp(magaxis,'D1')
+    magaxis = 'u';
+elseif strcmp(magaxis,'v') || strcmp(magaxis,'D2')
+    magaxis = 'v';
+elseif strcmp(magaxis,'w') || strcmp(magaxis,'b')
+    magaxis = 'w';
 else
     disp(['Magaxis "',magaxis,'" not understood, init_rotm is identity'])
     init_rotm = eye(3);
@@ -30,12 +25,12 @@ else
     return
 end
     
-if strcmp(MWaxis,'x') || strcmp(MWaxis,'D1')
-    MWaxis = 'x';
-elseif strcmp(MWaxis,'y') || strcmp(MWaxis,'D2')
-    MWaxis = 'y';
-elseif strcmp(MWaxis,'z') || strcmp(MWaxis,'b')
-    MWaxis = 'z';
+if strcmp(MWaxis,'u') || strcmp(MWaxis,'D1')
+    MWaxis = 'u';
+elseif strcmp(MWaxis,'v') || strcmp(MWaxis,'D2')
+    MWaxis = 'v';
+elseif strcmp(MWaxis,'w') || strcmp(MWaxis,'b')
+    MWaxis = 'w';
 else
     disp(['MWaxis "',MWaxis,'" not understood, init_rotm is identity'])
     init_rotm = eye(3);
@@ -45,52 +40,52 @@ end
 
 
 switch magaxis
-    case 'x'
+    case 'u'
         init_rotm = rotaxi2mat([rt,0,rt],180*deg);
         
         switch MWaxis
-            case 'x'
+            case 'u'
                 mode = 'parallel';
                 return
-            case 'y'
+            case 'v'
                 mode = 'perpendicular';
                 init_rotm = rotaxi2mat([0,0,1],90*deg)*init_rotm;
                 return
-            case 'z'
+            case 'w'
                 mode = 'perpendicular';
                 return
         end        
 
-    case 'y'
+    case 'v'
         init_rotm = rotaxi2mat([0,rt,rt],180*deg);
         
         switch MWaxis
-            case 'x'
+            case 'u'
                 mode = 'perpendicular';
                 init_rotm = rotaxi2mat([0,0,1],180*deg)*init_rotm;
                 return
-            case 'y'
+            case 'v'
                 mode = 'parallel';
                 return
-            case 'z'
+            case 'w'
                 mode = 'perpendicular';
                 init_rotm = rotaxi2mat([0,0,1],-90*deg)*init_rotm;
                 return
         end        
 
     
-    case 'z'
+    case 'w'
         init_rotm = eye(3);
         
         switch MWaxis
-            case 'x'
+            case 'u'
                 mode = 'perpendicular';
                 return
-            case 'y'
+            case 'v'
                 mode = 'perpendicular';
                 init_rotm = rotaxi2mat([0,0,1],-90*deg)*init_rotm;
                 return
-            case 'z'
+            case 'w'
                 mode = 'parallel';
                 return
         end        
