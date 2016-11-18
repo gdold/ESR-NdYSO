@@ -33,7 +33,7 @@ Opt.Sites = [1,2]; % [1,2] for both YSO sites
 
 % Set up field sweep parameters
 max_field = 50;
-field_steps = 50;
+field_steps = 500;
 magaxis = 'D2';
 MWaxis = 'b';
 [init_rotm, Exp.Mode] = setInitialAxes(magaxis,MWaxis); % currently only crystal axes
@@ -151,5 +151,39 @@ for step = 0:rot_steps
     
     cryst_rot = Rot_inc_lab*cryst_rot*Rot_inc'; %Inverse crystal rotation
 end
+
+%% Look for clock transitions that meet criteria %%
+promising_clocks = struct([]);
+min_amplitude_relative = 0.1; % normalised to 1
+full_peak_amplitude = max([full(:).clocks(:).amplitude]);
+min_amplitude_absolute = min_amplitude_relative*full_peak_amplitude;
+max_deriv2 = 10; % MHz/mT^2...
+for i = 1:length(full)
+    if isempty(fieldnames(clocks))
+        continue
+    end
+    for j = 1:length(clocks)
+        if full(i).clocks(j).amplitude > min_amplitude_absolute ...
+        && abs(full(i).clocks(j).deriv2) < max_deriv2
+            promising_clocks = [promising_clocks, full(i).clocks(j)];
+        end
+    end
+end
+
+disp('Promising clock transitions meeting criteria: ');
+disp(['Min amplitude (relative): ',num2str(min_amplitude_relative)]);
+disp(['Max 2nd deriv: ',num2str(max_deriv2),' MHz/mT^2']);
+for i = 1:length(promising_clocks)
+    fprintf('f=%.f\tB=%.2f\tamp=%.2f\tderiv2=%.2f\ttransition=%i-->%i\n',...
+                promising_clocks(i).frequency,...
+                promising_clocks(i).field,...
+                promising_clocks(i).amplitude/full_peak_amplitude,...
+                promising_clocks(i).deriv2,...
+                promising_clocks(i).transition(1),...
+                promising_clocks(i).transition(2)...
+    );
+end
+
+
 
 save(['full_',datestr(now,'yyyy-mm-ddTHH-MM-SS'),'.mat'],'full')

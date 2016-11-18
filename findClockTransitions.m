@@ -19,6 +19,8 @@ end
 AllClocks = [];
 clocks = struct();
 
+field_step_size = dat(1).field(2) - dat(1).field(1); % mT
+
 
 for transition = 1:length(dat)
     if bothsites && (dat(transition).site == 2)
@@ -40,14 +42,15 @@ for transition = 1:length(dat)
     ClockAmplitudes = amplitude(ClockIndices);
     
     
-    deriv1 = diff(frequency);
-    deriv2 = diff(deriv1); % 2nd derivative, lazy version
+    deriv1 = diff(frequency)/field_step_size;
+    deriv2 = diff(deriv1)/field_step_size; % approximate second derivative
     deriv2 = [deriv2(1);deriv2;deriv2(end)];
     % this won't work for max/min at start or end of data
     
     ClockDeriv2 = deriv2(ClockIndices);
     
     for clock = 1:length(ClockFreqs)
+        % Perhaps want to look for degenerate transitions here?
         clocks(end+1).frequency = ClockFreqs(clock);
         clocks(end).field = ClockFields(clock);
         clocks(end).amplitude = ClockAmplitudes(clock);
