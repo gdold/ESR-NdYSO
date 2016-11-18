@@ -3,10 +3,6 @@ rt = 1.0/sqrt(2);
 
 %% Spin system %%
 Sys = struct();
-Sys.Nucs = '145Nd';
-%Sys.I = 3.5; %Specified by Nucs(?)
-Sys.S = 0.5;
-
 % g and A tensors from source %
 % Allowed sources:
 % 'Maier-FlaigTensor'
@@ -26,7 +22,7 @@ Exp.Temperature = 20; %Kelvin
 % Want a threshold intensity below which eigfields will ignore transition?
 Opt = struct();
 Opt.Threshold = 0; % Get all transitions (incl forbidden)
-Opt.Sites = [1,2]; % [1,2] for both YSO sites
+Opt.Sites = 1; % [1,2] for both YSO sites
 
 %% Sweep parameters %%
 % Axes defined in crystal basis [D1 D2 b]
@@ -40,7 +36,7 @@ MWaxis = 'b';
 %Exp.Mode = [90*deg,0*deg];
 
 % Set up rotation parameters
-rotaxis = 'D1'; % set this manually
+rotaxis = 'D1'; % set this manually below
 total_angle = 360*deg;
 rot_steps = 0; % 0 for no angular sweep
 rot_axis = [1,0,0]; % crystal frame
@@ -73,9 +69,9 @@ dat_empty.amplitude = NaNarray;
 full = full_empty();
 
 for step = 0:rot_steps
-    disp(['Step ',int2str(step),' of ',int2str(rot_steps)]);
     angle = step*total_angle/rot_steps;
-    
+    %disp(['Step ',int2str(step),' of ',int2str(rot_steps)]);
+    fprintf('Step %i of %i\n',step,rot_steps)
     full(step+1) = full_empty;
     full(step+1).angle = angle;
     
@@ -89,6 +85,7 @@ for step = 0:rot_steps
     
     for n = 0:field_steps
         mag_field = n*max_field/field_steps;
+        
         %disp([int2str(mag_field),'mT'])
         Exp.Field = mag_field;
         Exp.CrystalOrientation = eulang(cryst_rot);

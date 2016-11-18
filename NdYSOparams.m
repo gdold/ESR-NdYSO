@@ -6,6 +6,10 @@ function Sys = NdYSOparams(Sys,param)
 % 'Maier-FlaigPrincipal'
 % 'Wolfowicz'
 
+Sys.Nucs = '145Nd';
+Sys.I = 3.5;
+Sys.S = 0.5;
+
 switch param
     case 'Maier-FlaigTensor'
         % Site 1 is occupied to a much higher degree
