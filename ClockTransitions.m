@@ -14,7 +14,7 @@ Sys = NdYSOparams(Sys,parameter_source); % Appends chosen parameters to Sys
 %% Experimental parameters %%
 
 Exp = struct();
-Exp.Range = [0 3]; %GHz
+Exp.Range = [0 3]; %GHz - must start at 0 to number transitions consistently
 Exp.CrystalSymmetry = 'C2h'; %monoclinic C^6_2h spacegroup 
 Exp.Temperature = 20; %Kelvin
 
@@ -37,10 +37,13 @@ MWaxis = 'b';
 
 % Set up rotation parameters
 rotaxis = 'D1'; % set this manually below
-total_angle = 360*deg;
-rot_steps = 0; % 0 for no angular sweep
 rot_axis = [1,0,0]; % crystal frame
-rot_axis_lab = [1,0,0]; % lab frame
+start_angle = -5*deg;
+total_angle = 10*deg;
+rot_steps = 10; % 0 for no angular sweep
+rot_points = linspace(start_angle,start_angle+total_angle,rot_steps+1);
+
+%rot_axis_lab = [1,0,0]; % lab frame
 
 cryst_rot = init_rotm;
 cryst_rot_lab = init_rotm;
@@ -53,6 +56,7 @@ Rot_inc_lab = eye(3);
 % Full struct contains all dat structs from rotation sweep
 full_empty = struct();
 full_empty.data = struct();
+full_empty.clocks = struct();
 full_empty.angle = [];
 
 % Dat struct contains data from each field sweep
@@ -64,14 +68,15 @@ dat_empty.site = [];
 dat_empty.frequency = NaNarray;
 dat_empty.field = NaNarray;
 dat_empty.amplitude = NaNarray;
+dat_empty.angle = NaN;
 
 
 full = full_empty();
 
 for step = 0:rot_steps
-    angle = step*total_angle/rot_steps;
+    angle = rot_points(step+1);
     %disp(['Step ',int2str(step),' of ',int2str(rot_steps)]);
-    fprintf('Step %i of %i\n',step,rot_steps)
+    fprintf('\nStep %i of %i\t',step,rot_steps)
     full(step+1) = full_empty;
     full(step+1).angle = angle;
     
@@ -85,7 +90,7 @@ for step = 0:rot_steps
     
     for n = 0:field_steps
         mag_field = n*max_field/field_steps;
-        
+        fprintf('%3.f%% - %2.0f mT',100*n/field_steps,mag_field)
         %disp([int2str(mag_field),'mT'])
         Exp.Field = mag_field;
         Exp.CrystalOrientation = eulang(cryst_rot);
@@ -112,9 +117,12 @@ for step = 0:rot_steps
             dat(loc).frequency(n+1) = Pos(i)';
             dat(loc).field(n+1) = mag_field';
             dat(loc).amplitude(n+1) = Amp(i)';
+            dat(loc).angle = angle;
         end
         
+        fprintf('%c%c%c%c%c%c%c%c%c%c%c%c',8,8,8,8,8,8,8,8,8,8,8,8)%delete last 12 characters
     end
+    fprintf('\n')
     
     threshold = 0.1;
     strong_transitions = findStrongTransitions(dat,threshold);
@@ -139,7 +147,7 @@ for step = 0:rot_steps
     ylabel('Transition frequency (MHz)')
     title(['Mag axis: ',magaxis,'; MW axis: ',MWaxis,'; Rot axis: ',rotaxis,'; angle: ',num2str(angle/deg)])
     clocks = findClockTransitions(dat,threshold);
-    %saveas(gcf,['figure',int2str(5*step),'.png'])
+    saveas(gcf,['figure',int2str(step),'.png'])
     %text_label = {['Source: ',parameter_source],['Rotation axis: ',num2str(rot_axis')]};
     %annotation('textbox',[.2 .5 .3 .3],'string',text_label,'FitBoxToText','on');
     
@@ -150,34 +158,47 @@ for step = 0:rot_steps
 end
 
 %% Look for clock transitions that meet criteria %%
-promising_clocks = struct([]);
-min_amplitude_relative = 0.1; % normalised to 1
-full_peak_amplitude = max([full(:).clocks(:).amplitude]);
-min_amplitude_absolute = min_amplitude_relative*full_peak_amplitude;
+freqrange = [1000, 3000]; % MHz
 max_deriv2 = 10; % MHz/mT^2...
+min_amplitude_relative = 0.1; % normalised to 1
+num_displayed_clocks = 20;
+
+
+full_peak_amplitude = 0;
+for i = 1:length(full) % neater way to do this?
+    full_peak_amplitude = max([[full(i).clocks(:).amplitude], full_peak_amplitude]);
+end
+min_amplitude_absolute = min_amplitude_relative*full_peak_amplitude;
+
+promising_clocks = struct([]);
 for i = 1:length(full)
     if isempty(fieldnames(clocks))
         continue
     end
-    for j = 1:length(clocks)
+    for j = 1:length(full(i).clocks)
         if full(i).clocks(j).amplitude > min_amplitude_absolute ...
-        && abs(full(i).clocks(j).deriv2) < max_deriv2
+        && abs(full(i).clocks(j).deriv2) < max_deriv2...
+        && full(i).clocks(j).frequency > freqrange(1) && full(i).clocks(j).frequency < freqrange(2)
             promising_clocks = [promising_clocks, full(i).clocks(j)];
         end
     end
 end
 
-disp('Promising clock transitions meeting criteria: ');
-disp(['Min amplitude (relative): ',num2str(min_amplitude_relative)]);
-disp(['Max 2nd deriv: ',num2str(max_deriv2),' MHz/mT^2']);
-for i = 1:length(promising_clocks)
-    fprintf('f=%.f\tB=%.2f\tamp=%.2f\tderiv2=%.2f\ttransition=%i-->%i\n',...
-                promising_clocks(i).frequency,...
-                promising_clocks(i).field,...
-                promising_clocks(i).amplitude/full_peak_amplitude,...
-                promising_clocks(i).deriv2,...
-                promising_clocks(i).transition(1),...
-                promising_clocks(i).transition(2)...
+% prioritise low second derivative over amplitude
+best_clocks = nestedSortStruct(promising_clocks,{'deriv2mag','amplitude'},[1,-1]);
+
+fprintf('Top %i clock transitions:\n',num_displayed_clocks)
+%disp(['Min amplitude (relative): ',num2str(min_amplitude_relative)]);
+%disp(['Max 2nd deriv: ',num2str(max_deriv2),' MHz/mT^2']);
+for i = 1:num_displayed_clocks
+    fprintf('f=%.f\tB=%.1f\tamp=%.3f\tderiv2=%.3f\ttransition=%i-->%i\tangle=%.0f\n',...
+                best_clocks(i).frequency,...
+                best_clocks(i).field,...
+                best_clocks(i).amplitude/full_peak_amplitude,...
+                best_clocks(i).deriv2,...
+                best_clocks(i).transition(1),...
+                best_clocks(i).transition(2),...
+                best_clocks(i).angle/deg...
     );
 end
 

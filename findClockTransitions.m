@@ -48,6 +48,7 @@ for transition = 1:length(dat)
     % this won't work for max/min at start or end of data
     
     ClockDeriv2 = deriv2(ClockIndices);
+    ClockDeriv2mag = abs(ClockDeriv2);
     
     for clock = 1:length(ClockFreqs)
         % Perhaps want to look for degenerate transitions here?
@@ -55,8 +56,10 @@ for transition = 1:length(dat)
         clocks(end).field = ClockFields(clock);
         clocks(end).amplitude = ClockAmplitudes(clock);
         clocks(end).deriv2 = ClockDeriv2(clock);
+        clocks(end).deriv2mag = ClockDeriv2mag(clock);
         clocks(end).transition = dat(transition).transition;
-        clocks(end).index = transition;;
+        clocks(end).index = transition;
+        clocks(end).angle = dat.angle;
     end
     
     if ~isempty(ClockFreqs)
