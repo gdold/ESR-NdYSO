@@ -32,11 +32,11 @@ Exp.Temperature = 20; %Kelvin
 
 % CHOOSE WHETHER TO REPRODUCE FIG. 4.4a, 4.4b, 4.4c
 % 4.4a
-% rot_axis = ang2vec(69.83*deg,3.75*deg); % Fig 4.4a
-% init_mag_vect = [0.999745;-0.001384;-0.022508];
+rot_axis = ang2vec(69.83*deg,3.75*deg); % Fig 4.4a
+init_mag_vect = [0.999745;-0.001384;-0.022508];
 % 4.4b
-rot_axis = ang2vec(189.13*deg,96.21*deg); % Fig 4.4b
-init_mag_vect = [-0.156794;0.987480;-0.017280];
+% rot_axis = ang2vec(189.13*deg,96.21*deg); % Fig 4.4b
+% init_mag_vect = [-0.156794;0.987480;-0.017280];
 % 4.4c
 % rot_axis = ang2vec(89.72*deg,-92.77*deg); % Fig 4.4c
 % init_mag_vect = [0.99998808;-0.004875;-2.358e-04];
@@ -52,7 +52,7 @@ Opt = struct();
 %Opt.Threshold = 100;
 
 % Number of steps in rotation simulation
-rot_steps = 72;
+rot_steps = 288;
 total_angle = 360*deg;
 
 %% Calculate spectrum %%
@@ -84,12 +84,13 @@ for n = 0:rot_steps
     cryst_rot = Rot_inc_lab*cryst_rot*Rot_inc'; %Inverse crystal rotation
 end
 
-figure
+%figure
 hold off
-scatter(x,y1,'.')
+scatter(x2,y1,'.','k')
 hold on
-scatter(x,y2,'.')
+scatter(x2,y2,'.','g')
+hold off
 xlabel('Angle (degrees)')
 ylabel('B (mT)')
-text_label = {['Source: ',parameter_source],['Rotation axis: ',num2str(rot_axis')]};
-annotation('textbox',[.2 .5 .3 .3],'string',text_label,'FitBoxToText','on');
+%text_label = {['Source: ',parameter_source],['Rotation axis: ',num2str(rot_axis')]};
+%annotation('textbox',[.2 .5 .3 .3],'string',text_label,'FitBoxToText','on');
