@@ -31,13 +31,13 @@ Opt.Sites = 1; % [1,2] for both YSO sites
 max_field = 50;
 field_steps = 500;
 magaxis = 'D2';
-MWaxis = 'D1';
+MWaxis = 'b';
 [init_rotm, Exp.Mode] = setInitialAxes(magaxis,MWaxis); % currently only crystal axes
 %Exp.Mode = [90*deg,0*deg];
 
 % Set up rotation parameters
-rotaxis = 'D1'; % set this manually below
-rot_axis = [1,0,0]; % crystal frame
+rotaxis = 'b'; % set this manually below
+rot_axis = [0,0,1]; % crystal frame
 start_angle = 0*deg;
 total_angle = 0*deg;
 rot_steps = 0; % 0 for no angular sweep
@@ -145,11 +145,11 @@ for step = 0:rot_steps
     ylim(Exp.Range*1000)
     xlabel('B (mT)')
     ylabel('Transition frequency (MHz)')
-    %title(['Mag axis: ',magaxis,'; MW axis: ',MWaxis,'; Rot axis: ',rotaxis,'; angle: ',num2str(angle/deg)])
-    title(['Mag axis: ',magaxis,'; MW axis: ',MWaxis])
+    title(['Mag axis: ',magaxis,'; MW axis: ',MWaxis,'; Rot axis: ',rotaxis,'; angle: ',num2str(angle/deg)])
+    %title(['Mag axis: ',magaxis,'; MW axis: ',MWaxis])
     clocks = findClockTransitions(dat,threshold);
     %saveas(gcf,['figure',int2str(step),'.png'])
-    saveas(gcf,['mag',magaxis,'MW',MWaxis,'.png']);
+    saveas(gcf,['mag',magaxis,'MW',MWaxis,'step',int2str(step),'.png']);
     %text_label = {['Source: ',parameter_source],['Rotation axis: ',num2str(rot_axis')]};
     %annotation('textbox',[.2 .5 .3 .3],'string',text_label,'FitBoxToText','on');
     
@@ -197,7 +197,7 @@ fprintf('Top %i clock transitions:\n',num_displayed_clocks)
 %disp(['Min amplitude (relative): ',num2str(min_amplitude_relative)]);
 %disp(['Max 2nd deriv: ',num2str(max_deriv2),' MHz/mT^2']);
 for i = 1:num_displayed_clocks
-    fprintf('f=%.f\tB=%.1f\tamp=%.3f\tderiv2=%.3f\ttransition=%i-->%i\tangle=%.0f\n',...
+    fprintf('f=%.f\tB=%.1f\tamp=%.4f\tderiv2=%.3f\ttransition=%i-->%i\tangle=%.2f\n',...
                 best_clocks(i).frequency,...
                 best_clocks(i).field,...
                 best_clocks(i).amplitude/full_peak_amplitude,...
