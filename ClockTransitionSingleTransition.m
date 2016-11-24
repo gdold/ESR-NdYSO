@@ -164,9 +164,12 @@ max_deriv2 = 10; % MHz/mT^2...
 min_amplitude_relative = 0.1; % normalised to 1
 num_displayed_clocks = 20;
 
-specify_transitions = [80]; % specify list of indices - 80 = 7-->12
-transition_str = '7-->12';
 
+
+spec = [7,12]; % specify index interesting
+num_of_levels = 0.5*(1+sqrt(1+8*length(full(1).data(:))));
+transition_indices = sum(num_of_levels-(1:spec(1)))-num_of_levels+spec(2);
+transition_str = [int2str(spec(1)),'-->',int2str(spec(2))];
 
 
 
@@ -180,10 +183,10 @@ x = [];
 y = [];
 z = [];
 
-if ~isempty(specify_transitions)
+if ~isempty(transition_index)
     for i = 1:length(full)
-        for transition = 1:length(specify_transitions)
-            idx = find([full(i).clocks(:).index] == specify_transitions(transition));
+        for transition = 1:length(transition_index)
+            idx = find([full(i).clocks(:).index] == transition_index(transition));
             x = [x, repelem(full(i).angle/deg,length([full(i).clocks(idx).frequency]))];
             y = [y, [full(i).clocks(idx).field]];
             %y = [y, [full(i).clocks(idx).field]];
