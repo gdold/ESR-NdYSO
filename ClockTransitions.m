@@ -39,8 +39,8 @@ MWaxis = 'b';
 rotaxis = 'b'; % set this manually below
 rot_axis = [0,0,1]; % crystal frame
 start_angle = 0*deg;
-total_angle = 0*deg;
-rot_steps = 0; % 0 for no angular sweep
+total_angle = 10*deg;
+rot_steps = 2; % 0 for no angular sweep
 rot_points = linspace(start_angle,start_angle+total_angle,rot_steps+1);
 
 %rot_axis_lab = [1,0,0]; % lab frame
@@ -58,6 +58,9 @@ full_empty = struct();
 full_empty.data = struct();
 full_empty.clocks = struct();
 full_empty.angle = [];
+full_empty.magaxis = magaxis;
+full_empty.MWaxis = MWaxis;
+full_empty.rotaxis = rotaxis;
 
 % Dat struct contains data from each field sweep
 dat_empty = struct();
