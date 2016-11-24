@@ -4,8 +4,10 @@ deg = pi/180;
 rt = 1.0/sqrt(2);
 
 % IF NEED TO LOAD full STRUCT
-filename = 'full_2016-11-24T13-46-07.mat'; % file containing full().data() struct
-load(filename);
+filename = ''; % file containing full().data() struct
+if ~isempty(filename)
+    load(filename);
+end
 
 transition = [7,12]; % specify transition - lower level first
 num_of_levels = 0.5*(1+sqrt(1+8*length(full(1).data(:)))); % inverse of 0.5*n*(n-1)
