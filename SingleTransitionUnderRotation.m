@@ -7,10 +7,10 @@ rt = 1.0/sqrt(2);
 filename = 'full_2016-11-24T13-46-07.mat'; % file containing full().data() struct
 load(filename);
 
-spec = [7,12]; % specify transition - lower level first
+transition = [7,12]; % specify transition - lower level first
 num_of_levels = 0.5*(1+sqrt(1+8*length(full(1).data(:)))); % inverse of 0.5*n*(n-1)
-transition_index = sum(num_of_levels-(1:spec(1)))-num_of_levels+spec(2);
-transition_str = [int2str(spec(1)),'-->',int2str(spec(2))];
+transition_index = sum(num_of_levels-(1:transition(1)))-num_of_levels+transition(2);
+transition_str = [int2str(transition(1)),'-->',int2str(transition(2))];
 
 x = [];
 y = [];
