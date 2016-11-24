@@ -37,9 +37,9 @@ MWaxis = 'b';
 
 % Set up rotation parameters
 rotaxis = 'D1'; % set this manually below
-rot_axis = [1,2,0]; % rotate mag field in crystal frame
+rot_axis = [1,0,0]; % rotate mag field in crystal frame
 start_angle = 0*deg;
-total_angle = 90*deg;
+total_angle = 30*deg;
 rot_steps = 2; % 0 for no angular sweep
 rot_points = linspace(start_angle,start_angle+total_angle,rot_steps+1);
 
@@ -58,6 +58,9 @@ full_empty = struct();
 full_empty.data = struct();
 full_empty.clocks = struct();
 full_empty.angle = [];
+full_empty.magaxis = magaxis;
+full_empty.MWaxis = MWaxis;
+full_empty.rotaxis = rotaxis;
 
 % Dat struct contains data from each field sweep
 dat_empty = struct();
@@ -166,8 +169,8 @@ num_displayed_clocks = 20;
 
 
 
-spec = [7,12]; % specify index interesting
-num_of_levels = 0.5*(1+sqrt(1+8*length(full(1).data(:))));
+spec = [7,12]; % specify transition - lower level first
+num_of_levels = 0.5*(1+sqrt(1+8*length(full(1).data(:)))); % inverse of 0.5*n*(n-1)
 transition_indices = sum(num_of_levels-(1:spec(1)))-num_of_levels+spec(2);
 transition_str = [int2str(spec(1)),'-->',int2str(spec(2))];
 
