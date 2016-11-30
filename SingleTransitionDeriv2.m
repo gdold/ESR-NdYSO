@@ -5,13 +5,14 @@ deg = pi/180;
 rt = 1.0/sqrt(2);
 
 % IF NEED TO LOAD full STRUCT
-filename = ''; % file containing full().data() struct
+filename = '';
+%filename = 'finesweep1/fullstruct.mat'; % file containing full().data() struct
 if ~isempty(filename)
     load(filename);
 end
 
-rotation_step = 1;
-transition = [7,12]; % specify transition - lower level first
+rotation_step = 561;
+transition = [7,10]; % specify transition - lower level first
 threshold = 0.1;
 
 field_step_size = full(1).data(1).field(2) - full(1).data(1).field(1); % mT

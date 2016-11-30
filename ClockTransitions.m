@@ -16,7 +16,7 @@ Sys = NdYSOparams(Sys,parameter_source); % Appends chosen parameters to Sys
 Exp = struct();
 Exp.Range = [0 3]; %GHz - must start at 0 to number transitions consistently
 Exp.CrystalSymmetry = 'C2h'; %monoclinic C^6_2h spacegroup 
-Exp.Temperature = 20; %Kelvin
+Exp.Temperature = 0.020; %Kelvin
 
 %% Other simulation parameters %%
 % Want a threshold intensity below which eigfields will ignore transition?
@@ -30,7 +30,7 @@ Opt.Sites = 1; % [1,2] for both YSO sites
 % Set up field sweep parameters
 max_field = 50;
 field_steps = 500;
-magaxis = 'D2';
+magaxis = 'D1';
 MWaxis = 'b';
 [init_rotm, Exp.Mode] = setInitialAxes(magaxis,MWaxis); % currently only crystal axes
 %Exp.Mode = [90*deg,0*deg];
@@ -39,8 +39,8 @@ MWaxis = 'b';
 rotaxis = 'b'; % set this manually below
 rot_axis = [0,0,1]; % crystal frame
 start_angle = 0*deg;
-total_angle = 10*deg;
-rot_steps = 2; % 0 for no angular sweep
+total_angle = 180*deg;
+rot_steps = 0; % 0 for no angular sweep
 rot_points = linspace(start_angle,start_angle+total_angle,rot_steps+1);
 
 %rot_axis_lab = [1,0,0]; % lab frame
@@ -103,6 +103,7 @@ for step = 0:rot_steps
             Trans = [Trans;Trans]; % Add extra labels for simulation of site 2
             Site = [repelem(Opt.Sites(1),length(Site))';repelem(Opt.Sites(2),length(Site))'];
         end
+        
         transition_label = Site(:)*10000 + Trans(:,1)*100 + Trans(:,2);% label x->y by int xxyy, works only if <100 transitions
         field = repelem(mag_field,length(Pos))';
         
@@ -127,7 +128,7 @@ for step = 0:rot_steps
     end
     fprintf('\n')
     
-    threshold = 0.1;
+    threshold = 0.0;
     strong_transitions = findStrongTransitions(dat,threshold);
 
     x = [dat(strong_transitions).field];
@@ -163,53 +164,55 @@ for step = 0:rot_steps
 end
 
 %% Look for clock transitions that meet criteria %%
-promising_clocks = struct([]);
+
 freqrange = [1000, 3000]; % MHz
 max_deriv2 = 10; % MHz/mT^2...
-min_amplitude_relative = 0.1; % normalised to 1
+min_amplitude_relative = 0.0; % normalised to 1
 num_displayed_clocks = 20;
+require_levels = [2 13]; % specify 1 level for only transitions from/to that level, or 2 levels for a specific transition
 
+promising_clocks = struct([]);
 specify_transitions = [];
 
 
+findBestClocks(full,freqrange,max_deriv2,min_amplitude_relative,num_displayed_clocks,require_levels);
 
-
-full_peak_amplitude = 0;
-for i = 1:length(full) % neater way to do this?
-    full_peak_amplitude = max([[full(i).clocks(:).amplitude], full_peak_amplitude]);
-end
-min_amplitude_absolute = min_amplitude_relative*full_peak_amplitude;
-
-for i = 1:length(full)
-    if isempty(fieldnames(clocks))
-        continue
-    end
-    for j = 1:length(full(i).clocks)
-        if full(i).clocks(j).amplitude > min_amplitude_absolute ...
-        && abs(full(i).clocks(j).deriv2) < max_deriv2...
-        && full(i).clocks(j).frequency > freqrange(1) && full(i).clocks(j).frequency < freqrange(2)
-            promising_clocks = [promising_clocks, full(i).clocks(j)];
-        end
-    end
-end
-
-% prioritise low second derivative over amplitude
-best_clocks = nestedSortStruct(promising_clocks,{'deriv2mag','amplitude'},[1,-1]);
-
-fprintf('Top %i clock transitions:\n',num_displayed_clocks)
-%disp(['Min amplitude (relative): ',num2str(min_amplitude_relative)]);
-%disp(['Max 2nd deriv: ',num2str(max_deriv2),' MHz/mT^2']);
-for i = 1:num_displayed_clocks
-    fprintf('f=%.f\tB=%.1f\tamp=%.4f\tderiv2=%.3f\ttransition=%i-->%i\tangle=%.2f\n',...
-                best_clocks(i).frequency,...
-                best_clocks(i).field,...
-                best_clocks(i).amplitude/full_peak_amplitude,...
-                best_clocks(i).deriv2,...
-                best_clocks(i).transition(1),...
-                best_clocks(i).transition(2),...
-                best_clocks(i).angle/deg...
-    );
-end
+% full_peak_amplitude = 0;
+% for i = 1:length(full) % neater way to do this?
+%     full_peak_amplitude = max([[full(i).clocks(:).amplitude], full_peak_amplitude]);
+% end
+% min_amplitude_absolute = min_amplitude_relative*full_peak_amplitude;
+% 
+% for i = 1:length(full)
+%     if isempty(fieldnames(clocks))
+%         continue
+%     end
+%     for j = 1:length(full(i).clocks)
+%         if full(i).clocks(j).amplitude > min_amplitude_absolute ...
+%         && abs(full(i).clocks(j).deriv2) < max_deriv2...
+%         && full(i).clocks(j).frequency > freqrange(1) && full(i).clocks(j).frequency < freqrange(2)
+%             promising_clocks = [promising_clocks, full(i).clocks(j)];
+%         end
+%     end
+% end
+% 
+% % prioritise low second derivative over amplitude
+% best_clocks = nestedSortStruct(promising_clocks,{'deriv2mag','amplitude'},[1,-1]);
+% 
+% fprintf('Top %i clock transitions:\n',num_displayed_clocks)
+% %disp(['Min amplitude (relative): ',num2str(min_amplitude_relative)]);
+% %disp(['Max 2nd deriv: ',num2str(max_deriv2),' MHz/mT^2']);
+% for i = 1:num_displayed_clocks
+%     fprintf('f=%.f\tB=%.1f\tamp=%.4f\tderiv2=%.3f\ttransition=%i-->%i\tangle=%.2f\n',...
+%                 best_clocks(i).frequency,...
+%                 best_clocks(i).field,...
+%                 best_clocks(i).amplitude/full_peak_amplitude,...
+%                 best_clocks(i).deriv2,...
+%                 best_clocks(i).transition(1),...
+%                 best_clocks(i).transition(2),...
+%                 best_clocks(i).angle/deg...
+%     );
+% end
 
 
 

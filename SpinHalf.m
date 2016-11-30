@@ -1,13 +1,13 @@
-%Sys = struct('g',2,'S',.5); % No hyperfine
+Sys = struct('g',2,'S',.5); % No hyperfine
 %Sys = struct('g',2,'S',.5,'A',1,'Nucs','1H'); % hyperfine
-Sys = struct('g',2,'S',.5,'A',1,'Nucs','1H'); % hyperfine
+%Sys = struct('g',2,'S',.5,'A',1,'Nucs','1H'); % hyperfine
 Exp = struct();
 %Exp = struct('Range',[0,3]);
 
 % Seems sum of the amplitudes for g=2 is always around 195.8949
 
 field_steps = 50;
-max_field = 50;
+max_field = 250;
 
 x = [];
 y = [];
@@ -30,6 +30,22 @@ end
 fprintf('\n')
 
 %figure
+
+% for n = 0:field_steps
+%     freq = n*max_field/field_steps;
+%     fprintf('%3.f%% - %2.0f mT',100*n/field_steps,freq) % display percentage complete and current field
+%     %disp([int2str(mag_field),'mT'])
+%     Exp.mwFreq = freq;
+%     [Field,Amp] = eigfields(Sys,Exp);
+%     sum(Amp)
+%     Freq = repelem(freq,length(Field))'; % mag_field is now freq
+%     x = [x; Freq];
+%     y = [y; Field];
+%     z = [z; Amp];
+%     
+%     %fprintf('%c%c%c%c%c%c%c%c%c%c%c%c',8,8,8,8,8,8,8,8,8,8,8,8)%delete last 12 characters
+% end
+% fprintf('\n')
 
 
 scatter(x,y,[],z,'.')
