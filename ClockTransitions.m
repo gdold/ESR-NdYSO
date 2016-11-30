@@ -165,17 +165,17 @@ end
 
 %% Look for clock transitions that meet criteria %%
 
-freqrange = [1000, 3000]; % MHz
+freqrange = [000, 3000]; % MHz
 max_deriv2 = 10; % MHz/mT^2...
 min_amplitude_relative = 0.0; % normalised to 1
 num_displayed_clocks = 20;
-require_levels = [2 13]; % specify 1 level for only transitions from/to that level, or 2 levels for a specific transition
+require_levels = [1]; % specify 1 level for only transitions from/to that level, or 2 levels for a specific transition
 
 promising_clocks = struct([]);
 specify_transitions = [];
 
 
-findBestClocks(full,freqrange,max_deriv2,min_amplitude_relative,num_displayed_clocks,require_levels);
+best_clocks = findBestClocks(full,freqrange,max_deriv2,min_amplitude_relative,num_displayed_clocks,require_levels);
 
 % full_peak_amplitude = 0;
 % for i = 1:length(full) % neater way to do this?

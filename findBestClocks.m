@@ -10,8 +10,10 @@ for i = 1:length(full) % neater way to do this?
 end
 min_amplitude_absolute = min_amplitude_relative*full_peak_amplitude;
 
+
+
 for i = 1:length(full)
-    if isempty(fieldnames(full.clocks))
+    if isempty(fieldnames(full(i).clocks))
         continue
     end
     for j = 1:length(full(i).clocks)
@@ -44,6 +46,7 @@ end
 
 % prioritise low second derivative over amplitude
 best_clocks = nestedSortStruct(clocks_matching_transition,{'deriv2mag','amplitude'},[1,-1]);
+%best_clocks = nestedSortStruct(clocks_matching_transition,{'amplitude','deriv2mag'},[-1,1]);
 
 num_displayed_clocks = min(num_displayed_clocks,length(best_clocks));
 
